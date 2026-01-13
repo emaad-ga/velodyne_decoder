@@ -31,7 +31,7 @@ endif()
 
 ## Library
 
-find_package(yaml-cpp 0.7 REQUIRED)
+find_package(yaml-cpp REQUIRED)
 find_package(Microsoft.GSL REQUIRED)
 
 add_library(velodyne_decoder
