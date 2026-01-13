@@ -88,6 +88,7 @@ if(BUILD_PYTHON OR SKBUILD)
 endif()
 
 ## Install
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 
 include(GNUInstallDirs)
 install(TARGETS velodyne_decoder
@@ -133,3 +134,4 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/velodyne_decoder-config.cmake"
     "${CMAKE_CURRENT_BINARY_DIR}/velodyne_decoder-config-version.cmake"
     DESTINATION "${CMAKE_INSTALL_DIR}"
 )
+endif()
