@@ -1,4 +1,4 @@
-if(NOT DEFINED CMAKE_BUILD_TYPE)
+if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
@@ -33,19 +33,28 @@ if(USE_CONAN)
         )
         list(APPEND CMAKE_PROJECT_TOP_LEVEL_INCLUDES ${CMAKE_CURRENT_LIST_DIR}/conan_provider.cmake)
     else()
+        if(NOT CMAKE_BUILD_TYPE)
+            set(EFFECTIVE_BUILD_TYPE "Release")
+        else()
+            set(EFFECTIVE_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
+        endif()
+
         if(NOT EXISTS "${CMAKE_BINARY_DIR}/full_deploy")
-            message(FATAL_ERROR
-                "CMake 3.24 or greater is required to install Conan dependencies automatically. "
-                "You will have to run\n"
-                "'conan install . --build=missing --deployer=full_deploy --deployer-folder=build/Release'\n"
-                "manually in the repository root instead."
+            message(STATUS "CMake < 3.24 detected. Running 'conan install' automatically...")
+            execute_process(
+                COMMAND conan install ${CMAKE_CURRENT_SOURCE_DIR} -of=${CMAKE_CURRENT_BINARY_DIR} --build=missing --deployer=full_deploy --deployer-folder=${CMAKE_BINARY_DIR} -s build_type=${EFFECTIVE_BUILD_TYPE}
+                RESULT_VARIABLE CONAN_INSTALL_RESULT
             )
+            if(NOT CONAN_INSTALL_RESULT EQUAL 0)
+                message(FATAL_ERROR "Conan install failed: ${CONAN_INSTALL_RESULT}")
+            endif()
         endif()
         # To use the output from the Conan CMakeDeps generator
         list(PREPEND CMAKE_PREFIX_PATH
-            ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/generators
-            ${CMAKE_CURRENT_BINARY_DIR}/build/${CMAKE_BUILD_TYPE}/generators
+            ${CMAKE_CURRENT_BINARY_DIR}/${EFFECTIVE_BUILD_TYPE}/generators
+            ${CMAKE_CURRENT_BINARY_DIR}/build/${EFFECTIVE_BUILD_TYPE}/generators
         )
+        set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} PARENT_SCOPE)
     endif()
 endif()
 
@@ -112,3 +121,4 @@ function(copy_third_party_dlls)
         file(COPY ${dll_files} DESTINATION "${CMAKE_BINARY_DIR}/bin")
     endif()
 endfunction()
+
